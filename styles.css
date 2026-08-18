@@ -1,0 +1,245 @@
+/* ---------------------------------------------------------------
+   OneGoodThought — one affirmation, once. No list, nothing to manage.
+   --------------------------------------------------------------- */
+
+:root {
+  /* warm, near-black scene — never pure black */
+  --bg: oklch(17% 0.020 55);
+  --bg-deep: oklch(11% 0.016 50);
+
+  --ink: oklch(93% 0.020 75);
+  --ink-dim: oklch(74% 0.020 70);
+  --ink-faint: oklch(55% 0.018 65);
+
+  --ember: oklch(72% 0.135 45);
+  --ember-dim: oklch(58% 0.100 45);
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  --ease-out: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-in: cubic-bezier(0.5, 0, 0.75, 0);
+
+  --font-serif: 'Literata', 'Iowan Old Style', 'Georgia', serif;
+  --font-sans: 'Hanken Grotesk', -apple-system, 'Segoe UI', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow: hidden;
+}
+
+/* ---------- ambient scene ---------- */
+
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 50% at 38% 34%, oklch(30% 0.05 45 / 0.55), transparent 70%),
+    radial-gradient(120% 90% at 50% 100%, var(--bg-deep), transparent 60%),
+    var(--bg);
+  animation: breathe 9s var(--ease-in-out, ease-in-out) infinite alternate;
+}
+
+.ambient::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@keyframes breathe {
+  from { opacity: 0.85; transform: scale(1); }
+  to   { opacity: 1;    transform: scale(1.035); }
+}
+
+/* ---------- stage ---------- */
+
+.stage {
+  position: relative;
+  z-index: 1;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: var(--space-8);
+  padding: var(--space-8) max(var(--space-8), 8vw);
+  padding-top: max(var(--space-8), env(safe-area-inset-top));
+  padding-bottom: max(var(--space-16), env(safe-area-inset-bottom));
+  animation: rise 900ms var(--ease-out) both;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.affirmation {
+  margin: 0;
+  max-width: 20ch;
+  font-family: var(--font-serif);
+  font-weight: 440;
+  font-size: clamp(1.75rem, 4.6vw + 0.7rem, 3.4rem);
+  line-height: 1.22;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-wrap: balance;
+  transition: opacity 220ms var(--ease-out), transform 220ms var(--ease-out), filter 220ms var(--ease-out);
+}
+
+.affirmation.is-swapping {
+  opacity: 0;
+  transform: translateY(-6px);
+  filter: blur(2px);
+  transition: opacity 150ms var(--ease-in), transform 150ms var(--ease-in), filter 150ms var(--ease-in);
+}
+
+/* ---------- control ---------- */
+
+.another {
+  appearance: none;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: var(--space-2) var(--space-1);
+  margin-left: -0.25rem;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  letter-spacing: 0.01em;
+  color: var(--ink-dim);
+  transition: color 200ms var(--ease-out);
+}
+
+.another span {
+  position: relative;
+}
+
+.another span::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.35;
+  transform: scaleX(1);
+  transform-origin: left;
+  transition: opacity 200ms var(--ease-out), background-color 200ms var(--ease-out);
+}
+
+.another:hover {
+  color: var(--ember);
+}
+
+.another:hover span::after {
+  background: var(--ember);
+  opacity: 0.6;
+}
+
+.another:active {
+  transform: scale(0.97);
+}
+
+.another:focus {
+  outline: none;
+}
+
+.another:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 6px;
+  border-radius: 3px;
+}
+
+.no-js .another {
+  display: none;
+}
+
+/* ---------- footer mark ---------- */
+
+.mark {
+  position: fixed;
+  left: max(var(--space-8), 8vw);
+  bottom: var(--space-6);
+  z-index: 1;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: var(--ink-faint);
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 30rem) {
+  .stage {
+    padding-left: var(--space-6);
+    padding-right: var(--space-6);
+    gap: var(--space-6);
+  }
+
+  .affirmation {
+    max-width: 22ch;
+  }
+
+  .mark {
+    left: var(--space-6);
+  }
+}
+
+@media (min-width: 90rem) {
+  .stage {
+    padding-left: 12vw;
+  }
+}
+
+/* ---------- motion & input preferences ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient,
+  .stage {
+    animation: none;
+  }
+
+  .affirmation,
+  .affirmation.is-swapping {
+    transition: opacity 120ms linear;
+    transform: none;
+    filter: none;
+  }
+}
+
+@media (pointer: coarse) {
+  .another {
+    padding: var(--space-3) var(--space-1);
+  }
+}
