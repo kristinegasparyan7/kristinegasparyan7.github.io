@@ -150,19 +150,19 @@
       next: document.getElementById('next-btn'),
       counter: document.getElementById('counter'),
       copy: document.getElementById('copy-btn'),
-      done: document.getElementById('done-btn'),
+      crumbs: document.getElementById('crumbs'),
+      crumbHome: document.getElementById('crumb-home'),
+      crumbCurrent: document.getElementById('crumb-current'),
       linkNote: document.getElementById('link-note'),
       historyView: document.getElementById('history-view'),
       historyList: document.getElementById('history-list'),
       historyNote: document.getElementById('history-note'),
       clear: document.getElementById('clear-btn'),
-      historyDone: document.getElementById('history-done'),
       navRow: document.getElementById('nav-row'),
       thoughtActions: document.getElementById('thought-actions'),
       gratitude: document.getElementById('gratitude-btn'),
       gratitudeView: document.getElementById('gratitude-view'),
       gratitudeList: document.getElementById('gratitude-list'),
-      gratitudeDone: document.getElementById('gratitude-done'),
       savedNote: document.getElementById('saved-note')
     };
 
@@ -327,6 +327,10 @@
     }
 
     function paint() {
+      var CRUMB = { review: 'Kept thoughts', history: 'How you\u2019ve been', gratitude: 'Five good things' };
+      d.crumbs.hidden = !CRUMB[mode];
+      if (CRUMB[mode]) d.crumbCurrent.textContent = CRUMB[mode];
+
       d.checkin.hidden = mode !== 'checkin';
       d.thoughtView.hidden = mode === 'checkin' || mode === 'history' || mode === 'gratitude';
       d.historyView.hidden = mode !== 'history';
@@ -477,9 +481,15 @@
       swapTo(function () { mode = 'review'; reviewPos = 0; });
     });
 
-    d.done.addEventListener('click', function () {
-      swapTo(function () { mode = 'thought'; });
-    });
+    function goHome() {
+      if (mode === 'gratitude') { window.clearTimeout(saveTimer); saveStore(store); }
+      disarmClear();
+      if (mode === 'review') { swapTo(function () { mode = 'thought'; }); return; }
+      mode = 'thought';
+      paint();
+    }
+
+    d.crumbHome.addEventListener('click', goHome);
 
     function stepReview(delta) {
       if (mode !== 'review' || kept.length < 2) return;
@@ -490,10 +500,15 @@
     d.next.addEventListener('click', function () { stepReview(1); });
 
     document.addEventListener('keydown', function (e) {
+      // Escape backs out of any sub-view, matching the breadcrumb
+      if (e.key === 'Escape' && (mode === 'review' || mode === 'history' || mode === 'gratitude')) {
+        e.preventDefault();
+        goHome();
+        return;
+      }
       if (mode !== 'review') return;
       if (e.key === 'ArrowLeft') { e.preventDefault(); stepReview(-1); }
       else if (e.key === 'ArrowRight') { e.preventDefault(); stepReview(1); }
-      else if (e.key === 'Escape') { e.preventDefault(); swapTo(function () { mode = 'thought'; }); }
     });
 
     /* ---- R9: copy link ---- */
@@ -523,12 +538,6 @@
       paint();
     });
 
-    d.historyDone.addEventListener('click', function () {
-      mode = 'thought';
-      disarmClear();
-      paint();
-    });
-
     // two-step confirm rather than a modal — clearing cannot be undone
     d.clear.addEventListener('click', function () {
       if (!clearArmed) {
@@ -550,13 +559,6 @@
       paint();
       var first = d.gratitudeList.querySelector('.g-input');
       if (first) first.focus();
-    });
-
-    d.gratitudeDone.addEventListener('click', function () {
-      window.clearTimeout(saveTimer);
-      saveStore(store);
-      mode = 'thought';
-      paint();
     });
 
     /* ---- shared kept-links opened without a reload ---- */
