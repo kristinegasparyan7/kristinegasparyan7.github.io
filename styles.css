@@ -2,7 +2,8 @@
    OneGoodThought — one affirmation, once. No list, nothing to manage.
    --------------------------------------------------------------- */
 
-:root {
+:root,
+:root[data-theme='dark'] {
   /* warm, near-black scene — never pure black */
   --bg: oklch(17% 0.020 55);
   --bg-deep: oklch(11% 0.016 50);
@@ -13,6 +14,11 @@
 
   --ember: oklch(72% 0.135 45);
   --ember-dim: oklch(58% 0.100 45);
+
+  --on-ember: oklch(18% 0.03 45);
+  --glow: oklch(30% 0.05 45 / 0.55);
+  --hairline: 0.1;
+  --border-strength: 0.4;
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -29,6 +35,31 @@
 
   --font-serif: 'Literata', 'Iowan Old Style', 'Georgia', serif;
   --font-sans: 'Hanken Grotesk', -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* Light: daylight on a warm desk. Deliberately past the beige band —
+   a cream page is the saturated default this palette avoids. */
+:root[data-theme='light'] {
+  --bg: oklch(98.5% 0.005 65);
+  --bg-deep: oklch(95% 0.008 60);
+
+  --ink: oklch(24% 0.022 50);
+  --ink-dim: oklch(40% 0.020 50);
+  --ink-faint: oklch(50% 0.018 50);
+
+  --ember: oklch(48% 0.155 40);
+  --ember-dim: oklch(60% 0.120 42);
+
+  --on-ember: oklch(99% 0.004 60);
+  --glow: oklch(88% 0.045 60 / 0.55);
+  --hairline: 0.14;
+  --border-strength: 0.5;
+}
+
+/* Armenian needs faces the Latin pair does not carry */
+:root:lang(hy) {
+  --font-serif: 'Noto Serif Armenian', 'Literata', 'Georgia', serif;
+  --font-sans: 'Noto Sans Armenian', 'Hanken Grotesk', -apple-system, sans-serif;
 }
 
 * {
@@ -63,7 +94,7 @@ body {
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(60% 50% at 38% 34%, oklch(30% 0.05 45 / 0.55), transparent 70%),
+    radial-gradient(60% 50% at 38% 34%, var(--glow), transparent 70%),
     radial-gradient(120% 90% at 50% 100%, var(--bg-deep), transparent 60%),
     var(--bg);
   animation: breathe 9s ease-in-out infinite alternate;
@@ -86,7 +117,7 @@ body {
 /* the scene cools slightly while reviewing — a different room, same house */
 body.is-reviewing .ambient {
   background:
-    radial-gradient(55% 45% at 42% 30%, oklch(27% 0.035 55 / 0.5), transparent 70%),
+    radial-gradient(55% 45% at 42% 30%, color-mix(in oklch, var(--glow) 70%, transparent), transparent 70%),
     radial-gradient(120% 90% at 50% 100%, var(--bg-deep), transparent 60%),
     var(--bg);
 }
@@ -199,7 +230,7 @@ body.is-reviewing .ambient {
   padding: var(--space-2) var(--space-6);
   background: var(--ember);
   border-color: var(--ember);
-  color: oklch(18% 0.03 45);
+  color: var(--on-ember);
 }
 
 .btn--primary:hover {
@@ -211,7 +242,7 @@ body.is-reviewing .ambient {
 
 .btn--secondary {
   padding: var(--space-2) var(--space-5);
-  border-color: oklch(from var(--ink) l c h / 0.42);
+  border-color: oklch(from var(--ink) l c h / var(--border-strength));
   color: var(--ink);
 }
 
@@ -292,7 +323,7 @@ body.is-reviewing .ambient {
   flex-wrap: wrap;
   margin-left: -0.5rem;
   padding-top: var(--space-4);
-  border-top: 1px solid oklch(from var(--ink) l c h / 0.1);
+  border-top: 1px solid oklch(from var(--ink) l c h / var(--hairline));
   width: 100%;
   max-width: 30rem;
 }
@@ -301,7 +332,7 @@ body.is-reviewing .ambient {
 
 .step-btn {
   appearance: none;
-  border: 1px solid oklch(from var(--ink) l c h / 0.16);
+  border: 1px solid oklch(from var(--ink) l c h / var(--border-strength));
   background: none;
   cursor: pointer;
   display: inline-flex;
@@ -444,7 +475,7 @@ body.is-reviewing .ambient {
   cursor: pointer;
   min-height: 44px;
   padding: var(--space-2) var(--space-4);
-  border: 1px solid oklch(from var(--ink) l c h / 0.4); /* 3.3:1 — the pill is the control boundary */
+  border: 1px solid oklch(from var(--ink) l c h / var(--border-strength)); /* 3.3:1 — the pill is the control boundary */
   border-radius: 999px;
   background: none;
   font-family: var(--font-sans);
@@ -532,15 +563,31 @@ body.is-reviewing .ambient {
   padding-right: var(--space-2);
 }
 
+.history-head,
 .history-row {
   display: grid;
-  /* paired columns, not space-between — the date and its result belong
-     together, and space-between pushed them to opposite edges */
-  grid-template-columns: 6.5rem 1fr;
+  /* three labelled columns: a row reads as date / felt / about, so the
+     values never have to be guessed at */
+  grid-template-columns: 5.5rem 1fr 1fr;
+  gap: var(--space-3);
   align-items: baseline;
-  gap: var(--space-4);
+}
+
+.history-head {
+  width: 100%;
+  max-width: 24rem;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid oklch(from var(--ink) l c h / calc(var(--hairline) * 2));
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.history-row {
   padding: var(--space-3) 0;
-  border-bottom: 1px solid oklch(from var(--ink) l c h / 0.09);
+  border-bottom: 1px solid oklch(from var(--ink) l c h / var(--hairline));
 }
 
 .history-row:last-child {
@@ -557,12 +604,135 @@ body.is-reviewing .ambient {
   white-space: nowrap;
 }
 
-.history-what {
+.history-felt,
+.history-about {
   font-family: var(--font-serif);
   font-size: 1rem;
-  color: var(--ink-dim);
   min-width: 0;
   text-wrap: pretty;
+}
+
+.history-felt {
+  color: var(--ink);
+}
+
+.history-about {
+  color: var(--ink-dim);
+}
+
+/* ---------- top bar ---------- */
+
+.topbar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-4) max(var(--space-6), 5vw);
+  padding-top: max(var(--space-4), env(safe-area-inset-top));
+}
+
+.topbar-utils {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.lang-switch {
+  display: flex;
+  align-items: center;
+  border: 1px solid oklch(from var(--ink) l c h / var(--border-strength));
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.lang-opt {
+  appearance: none;
+  border: none;
+  background: none;
+  cursor: pointer;
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  transition: background-color 180ms var(--ease-out), color 180ms var(--ease-out);
+}
+
+.lang-opt.is-active {
+  background: oklch(from var(--ember) l c h / 0.16);
+  color: var(--ember);
+}
+
+.lang-opt:hover:not(.is-active) {
+  color: var(--ink);
+}
+
+.lang-opt:focus {
+  outline: none;
+}
+
+.lang-opt:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: -2px;
+}
+
+.icon-btn {
+  appearance: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid oklch(from var(--ink) l c h / var(--border-strength));
+  border-radius: 999px;
+  background: none;
+  color: var(--ink-dim);
+  position: relative;
+  transition: color 180ms var(--ease-out), border-color 180ms var(--ease-out);
+}
+
+.icon-btn::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+
+.icon-btn svg {
+  width: 17px;
+  height: 17px;
+}
+
+.icon-btn:hover {
+  color: var(--ember);
+  border-color: oklch(from var(--ember) l c h / 0.7);
+}
+
+.icon-btn:focus {
+  outline: none;
+}
+
+.icon-btn:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 3px;
+}
+
+/* show the destination, not the current state */
+:root[data-theme='dark'] .icon-moon,
+:root[data-theme='light'] .icon-sun {
+  display: none;
+}
+
+/* the stage must clear the fixed bar */
+.stage {
+  padding-top: max(5.5rem, calc(env(safe-area-inset-top) + 5rem));
 }
 
 /* ---------- breadcrumbs ---------- */
@@ -745,7 +915,7 @@ body.is-reviewing .ambient {
   width: 100%;
   padding: 0 0 var(--space-1);
   border: none;
-  border-bottom: 1px solid oklch(from var(--ink) l c h / 0.4); /* 3.3:1 — an empty field is only its underline */
+  border-bottom: 1px solid oklch(from var(--ink) l c h / var(--border-strength)); /* 3.3:1 — an empty field is only its underline */
   background: none;
   font-family: var(--font-serif);
   font-size: 1.0625rem;
@@ -810,8 +980,21 @@ body.is-reviewing .ambient {
     font-size: 0.875rem;
   }
 
-  .history-what {
+  .history-head,
+  .history-row {
+    grid-template-columns: 4.5rem 1fr 1fr;
+    gap: var(--space-2);
+  }
+
+  .history-felt,
+  .history-about {
     font-size: 0.9375rem;
+  }
+
+  .topbar {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+    gap: var(--space-2);
   }
 
   .gratitude-list {

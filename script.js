@@ -3,10 +3,15 @@
 
   var C = window.OGT_CONTENT || {};
   var TAGS = C.affirmations || [];
-  var AFFIRMATIONS = TAGS.map(function (a) { return a.t; });
   var FEELINGS = C.feelings || [];
   var CONTEXTS = C.contexts || [];
   var PROMPTS = C.prompts || [];
+  var LANGS = C.languages || [{ id: 'en', label: 'EN' }];
+
+  var lang = 'en';
+  function T(key) { return ((C.ui || {})[lang] || {})[key] || ((C.ui || {}).en || {})[key] || ''; }
+  function textOf(item) { return (item && (item[lang] || item.en)) || ''; }
+  function affirmationText(i) { return textOf(TAGS[i]); }
 
   var STORE_KEY = 'ogt.v1';
   var HISTORY_LIMIT = 60; // R12 — bounded so history stays readable
@@ -30,7 +35,7 @@
   }
 
   function labelFor(list, id) {
-    for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i].label;
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) return textOf(list[i]);
     return null;
   }
 
@@ -75,7 +80,7 @@
     if (!raw || raw.length % 2 !== 0) return list;
     for (var i = 0; i < raw.length; i += 2) {
       var n = parseInt(raw.slice(i, i + 2), B36);
-      if (isNaN(n) || n < 0 || n >= AFFIRMATIONS.length) continue;
+      if (isNaN(n) || n < 0 || n >= TAGS.length) continue;
       if (list.indexOf(n) === -1) list.push(n);
     }
     return list;
@@ -130,7 +135,7 @@
 
   function init() {
     var el = document.getElementById('affirmation');
-    if (!el || !AFFIRMATIONS.length) return; // fallback text stays on screen
+    if (!el || !TAGS.length) return; // fallback text stays on screen
 
     var d = {
       checkin: document.getElementById('checkin'),
@@ -163,10 +168,22 @@
       gratitude: document.getElementById('gratitude-btn'),
       gratitudeView: document.getElementById('gratitude-view'),
       gratitudeList: document.getElementById('gratitude-list'),
-      savedNote: document.getElementById('saved-note')
+      savedNote: document.getElementById('saved-note'),
+      topbar: document.getElementById('topbar'),
+      langSwitch: document.getElementById('lang-switch'),
+      themeBtn: document.getElementById('theme-btn'),
+      historyHead: document.getElementById('history-head'),
+      historyTitle: document.getElementById('history-title'),
+      gratitudeTitle: document.getElementById('gratitude-title'),
+      gratitudeIntro: document.getElementById('gratitude-intro')
     };
 
     var store = loadStore();
+    lang = store.lang && (C.ui || {})[store.lang] ? store.lang : 'en';
+    var theme = store.theme === 'light' || store.theme === 'dark'
+      ? store.theme
+      : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+
     var kept = readKeptFromUrl();
     var today = dateKey();
 
@@ -198,10 +215,67 @@
 
     /* ---- rendering ---- */
 
+    function applyTheme() {
+      document.documentElement.setAttribute('data-theme', theme);
+      d.themeBtn.setAttribute('aria-label', theme === 'dark' ? T('themeToLight') : T('themeToDark'));
+    }
+
+    function renderLangSwitch() {
+      d.langSwitch.setAttribute('aria-label', T('langLabel'));
+      d.langSwitch.textContent = '';
+      LANGS.forEach(function (l) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'lang-opt' + (l.id === lang ? ' is-active' : '');
+        b.textContent = l.label;
+        b.setAttribute('aria-pressed', l.id === lang ? 'true' : 'false');
+        b.setAttribute('lang', l.id);
+        b.addEventListener('click', function () {
+          if (l.id === lang) return;
+          lang = l.id;
+          store.lang = lang;
+          saveStore(store);
+          document.documentElement.lang = lang;
+          applyStrings();
+          paint();
+        });
+        d.langSwitch.appendChild(b);
+      });
+    }
+
+    // every string that isn't rendered inside paint()
+    function applyStrings() {
+      document.documentElement.lang = lang;
+      document.title = 'OneGoodThought \u2014 ' + T('title');
+
+      var nodes = document.querySelectorAll('[data-i18n]');
+      for (var i = 0; i < nodes.length; i++) {
+        nodes[i].textContent = T(nodes[i].getAttribute('data-i18n'));
+      }
+
+      d.crumbHome.textContent = T('home');
+      d.another.querySelector('span').textContent = T('another');
+      d.another.setAttribute('aria-label', T('anotherLabel'));
+      d.checkinBack.querySelector('span').textContent = T('back');
+      d.copy.querySelector('span').textContent = T('copyLink');
+      d.review.querySelector('span').textContent = T('keptThoughts');
+      d.history.querySelector('span').textContent = T('howIveBeen');
+      d.historyTitle.textContent = T('howYouveBeen');
+      d.gratitudeTitle.textContent = T('fiveGood');
+      d.gratitudeIntro.textContent = T('gratitudeIntro');
+      d.linkNote.textContent = T('linkNote');
+      d.clear.querySelector('span').textContent = T('clear');
+      d.prev.setAttribute('aria-label', T('prevKept'));
+      d.next.setAttribute('aria-label', T('nextKept'));
+
+      renderLangSwitch();
+      applyTheme();
+    }
+
     function renderOptions() {
       var list = step === 1 ? FEELINGS : CONTEXTS;
-      d.stepLabel.textContent = 'Step ' + step + ' of 2';
-      d.question.textContent = step === 1 ? 'How are you feeling?' : 'What is affecting you?';
+      d.stepLabel.textContent = T('step').replace('{n}', step);
+      d.question.textContent = step === 1 ? T('q1') : T('q2');
       d.checkinBack.hidden = step === 1;
       d.options.textContent = '';
 
@@ -209,7 +283,7 @@
         var b = document.createElement('button');
         b.type = 'button';
         b.className = 'option';
-        b.textContent = opt.label;
+        b.textContent = textOf(opt);
         b.addEventListener('click', function () { choose(opt.id); });
         d.options.appendChild(b);
       });
@@ -226,20 +300,25 @@
 
         var when = document.createElement('span');
         when.className = 'history-date';
-        when.textContent = c.d === today ? 'Today' : c.d;
+        when.textContent = c.d === today ? T('today') : c.d;
 
-        var what = document.createElement('span');
-        what.className = 'history-what';
-        what.textContent = (labelFor(FEELINGS, c.f) || c.f) + ' · ' + (labelFor(CONTEXTS, c.c) || c.c);
+        var felt = document.createElement('span');
+        felt.className = 'history-felt';
+        felt.textContent = labelFor(FEELINGS, c.f) || c.f;
+
+        var about = document.createElement('span');
+        about.className = 'history-about';
+        about.textContent = labelFor(CONTEXTS, c.c) || c.c;
 
         li.appendChild(when);
-        li.appendChild(what);
+        li.appendChild(felt);
+        li.appendChild(about);
         d.historyList.appendChild(li);
       });
 
       if (!storageOk) {
         d.historyNote.hidden = false;
-        d.historyNote.textContent = 'This browser is blocking storage, so check-ins from this visit will not be saved.';
+        d.historyNote.textContent = T('storageBlocked');
       } else {
         d.historyNote.hidden = true;
       }
@@ -263,9 +342,9 @@
       window.clearTimeout(saveTimer);
       saveTimer = window.setTimeout(function () {
         var ok = saveStore(store);
-        d.savedNote.textContent = ok ? 'Saved' : 'Not saved — this browser blocks storage';
+        d.savedNote.textContent = ok ? T('saved') : T('notSaved');
         window.setTimeout(function () {
-          if (d.savedNote.textContent === 'Saved') d.savedNote.textContent = '';
+          if (d.savedNote.textContent === T('saved')) d.savedNote.textContent = '';
         }, 1800);
       }, 400);
     }
@@ -285,7 +364,7 @@
         var label = document.createElement('label');
         label.className = 'g-prompt';
         label.setAttribute('for', 'g' + i);
-        label.textContent = prompt;
+        label.textContent = textOf(prompt);
 
         var input = document.createElement('input');
         input.className = 'g-input';
@@ -318,8 +397,8 @@
       var redo = document.createElement('button');
       redo.type = 'button';
       redo.className = 'meta-btn';
-      redo.textContent = 'change';
-      redo.setAttribute('aria-label', 'Change how you are feeling today');
+      redo.textContent = T('change');
+      redo.setAttribute('aria-label', T('changeLabel'));
       redo.addEventListener('click', restartCheckin);
 
       d.meta.appendChild(span);
@@ -327,7 +406,7 @@
     }
 
     function paint() {
-      var CRUMB = { review: 'Kept thoughts', history: 'How you\u2019ve been', gratitude: 'Five good things' };
+      var CRUMB = { review: T('keptThoughts'), history: T('howYouveBeen'), gratitude: T('fiveGood') };
       d.crumbs.hidden = !CRUMB[mode];
       if (CRUMB[mode]) d.crumbCurrent.textContent = CRUMB[mode];
 
@@ -345,7 +424,7 @@
 
       var idx = currentIndex();
       if (typeof idx !== 'number') return;
-      el.textContent = AFFIRMATIONS[idx];
+      el.textContent = affirmationText(idx);
 
       renderMeta();
 
@@ -362,19 +441,17 @@
         // information — it is a destructive action, and must not look primary
         d.keep.className = 'btn btn--nav btn--danger keep';
         d.keep.removeAttribute('aria-pressed');
-        d.keep.querySelector('span').textContent = 'Remove';
-        d.keep.setAttribute('aria-label', 'Remove this thought from your kept thoughts');
+        d.keep.querySelector('span').textContent = T('remove');
+        d.keep.setAttribute('aria-label', T('removeLabel'));
       } else {
         d.keep.className = 'btn btn--secondary keep';
         d.keep.setAttribute('aria-pressed', isKept ? 'true' : 'false');
-        d.keep.querySelector('span').textContent = isKept ? 'Kept' : 'Keep';
-        d.keep.setAttribute('aria-label', isKept
-          ? 'Kept. Select to remove from your kept thoughts'
-          : 'Keep this thought');
+        d.keep.querySelector('span').textContent = isKept ? T('kept') : T('keep');
+        d.keep.setAttribute('aria-label', isKept ? T('keptLabel') : T('keepLabel'));
       }
 
       d.review.hidden = mode === 'review' || kept.length === 0;
-      if (!d.review.hidden) d.review.querySelector('span').textContent = 'Kept thoughts (' + kept.length + ')';
+      if (!d.review.hidden) d.review.querySelector('span').textContent = T('keptThoughts') + ' (' + kept.length + ')';
 
       d.history.hidden = mode === 'review' || store.checkins.length === 0;
       d.gratitude.hidden = mode === 'review'; // R13 — otherwise always available
@@ -516,9 +593,9 @@
     d.copy.addEventListener('click', function () {
       var label = d.copy.querySelector('span');
       function done(ok) {
-        label.textContent = ok ? 'Link copied' : 'Copy from the address bar';
+        label.textContent = ok ? T('copied') : T('copyFail');
         window.clearTimeout(copyTimer);
-        copyTimer = window.setTimeout(function () { label.textContent = 'Copy link'; }, 2400);
+        copyTimer = window.setTimeout(function () { label.textContent = T('copyLink'); }, 2400);
       }
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(window.location.href).then(function () { done(true); }, function () { done(false); });
@@ -529,7 +606,7 @@
     function disarmClear() {
       clearArmed = false;
       window.clearTimeout(clearTimer);
-      d.clear.querySelector('span').textContent = 'Clear history';
+      d.clear.querySelector('span').textContent = T('clear');
     }
 
     d.history.addEventListener('click', function () {
@@ -542,7 +619,7 @@
     d.clear.addEventListener('click', function () {
       if (!clearArmed) {
         clearArmed = true;
-        d.clear.querySelector('span').textContent = 'Tap again to clear';
+        d.clear.querySelector('span').textContent = T('clearArm');
         clearTimer = window.setTimeout(disarmClear, 4000);
         return;
       }
@@ -561,6 +638,13 @@
       if (first) first.focus();
     });
 
+    d.themeBtn.addEventListener('click', function () {
+      theme = theme === 'dark' ? 'light' : 'dark';
+      store.theme = theme;
+      saveStore(store);
+      applyTheme();
+    });
+
     /* ---- shared kept-links opened without a reload ---- */
     window.addEventListener('hashchange', function () {
       var incoming = readKeptFromUrl();
@@ -571,6 +655,8 @@
       paint();
     });
 
+    d.topbar.hidden = false;
+    applyStrings();
     paint();
   }
 
