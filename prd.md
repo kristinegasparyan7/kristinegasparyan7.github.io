@@ -21,16 +21,21 @@ Comparable products fail their users in two connected ways:
 ## 5. MVP Requirements (top requirements, cited)
 - **R1 — Show exactly ONE affirmation per visit**, no list or menu. Directly answers: "I just want ONE thing to do today."
 - **R2 — "Another" option** to reshuffle if it doesn't land, while staying single-focus (not a browsing list).
-- **R3 — No accounts, no streaks, no persisted progress state.** Removes the entire "streak reset wrong" failure class (~40% of tickets in the cited data).
+- **R3 — No accounts, no streaks, no *progress* state.** Removes the entire "streak reset wrong" failure class (~40% of tickets in the cited data). Amended for R7–R9: kept thoughts are user-chosen content, not progress or achievement, and are stored in the URL rather than an account — so no streak can break and nothing can be "lost" that the user did not choose to keep.
 - **R4 — No push notifications in v1.** Removes the "notifications not arriving / fire late" failure class. (See Riskiest Assumption #1 below — this directly trades off against the "no nudge" pain quote.)
 - **R5 — Content = curated affirmation set**, leaning on existing strength ("fond of many, many positive affirmations").
 - **R6 — One hardcoded fallback affirmation + basic error state.** If content fails to load or the "today" pick errors, show the fallback affirmation instead of a blank page, with no visible error. Without this, the MVP's worst-case failure loses a user on their very first visit — worse than the 8-day churn pattern it's meant to fix (see [edge-cases-and-risks.md](edge-cases-and-risks.md)).
+- **R7 — Keep a thought.** One action on the current affirmation marks it as kept ([US-keep-thought](user-stories/US-keep-thought.md)). Answers the gap R2 leaves open: "Another" lets a user move past a thought, but nothing let them hold on to one that landed.
+- **R8 — Review kept thoughts one at a time.** Kept thoughts are revisited in the same single-focus stage, never as a browsable list ([US-review-kept](user-stories/US-review-kept.md)). This is the constraint that keeps R7 from reintroducing the "12 habits, don't know which one matters" overwhelm the product exists to remove.
+- **R9 — Kept thoughts live in the URL.** The link is the store: no account, no server, portable across devices by sharing or bookmarking it ([US-portable-kept](user-stories/US-portable-kept.md)). Trade-off accepted: a user who never saves the link loses the set when the tab closes, so the UI must say plainly that the link is the collection.
 
 ## 6. Out of Scope (v1)
 Accounts/login, streak tracking, push notifications, habit lists, affirmation categories/browsing, social sharing, analytics/tracking infrastructure.
 
+*Amended (R7–R9):* keeping thoughts is now in scope, but browsing them as a list is not — kept thoughts are reviewed one at a time (R8). Cross-device sync is handled by sharing the URL, not by accounts.
+
 ## 7. User Flow
-Visit → see one affirmation for today → optionally tap "Another" → done. No onboarding beyond the landing view.
+Visit → see one affirmation for today → optionally tap "Another" → optionally "Keep" one → done. No onboarding beyond the landing view. Kept thoughts are reviewed only on request, one at a time, and the entry point stays hidden until something has been kept.
 
 ## 8. Build Plan (~2 sessions)
 - **Session 1:** static page, affirmation content set, "show one" + "another" logic.

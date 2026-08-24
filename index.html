@@ -30,9 +30,40 @@
       You&rsquo;re doing okay. That&rsquo;s enough for today.
     </p>
 
-    <button class="another" id="another-btn" type="button" aria-label="Show another thought">
-      <span>Another</span>
-    </button>
+    <div class="controls" id="today-controls" hidden>
+      <div class="row row-primary">
+        <button class="link-btn" id="another-btn" type="button" aria-label="Show another thought">
+          <span>Another</span>
+        </button>
+        <button class="link-btn keep" id="keep-btn" type="button" aria-pressed="false" aria-label="Keep this thought">
+          <span>Keep</span>
+        </button>
+      </div>
+
+      <div class="row row-review" id="review-nav" hidden>
+        <button class="step-btn" id="prev-btn" type="button" aria-label="Previous kept thought">
+          <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <span class="counter" id="counter" aria-live="polite">1 / 1</span>
+        <button class="step-btn" id="next-btn" type="button" aria-label="Next kept thought">
+          <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="link-btn quiet" id="copy-btn" type="button">
+          <span>Copy link</span>
+        </button>
+        <button class="link-btn quiet" id="done-btn" type="button">
+          <span>Done</span>
+        </button>
+      </div>
+
+      <button class="link-btn quiet review-entry" id="review-btn" type="button" hidden>
+        <span>Kept thoughts</span>
+      </button>
+
+      <p class="note" id="link-note" hidden>
+        Your kept thoughts live in this link. Save it to keep them.
+      </p>
+    </div>
   </main>
 
   <footer class="mark" aria-hidden="true">
