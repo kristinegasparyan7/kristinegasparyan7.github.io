@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>OneGoodThought — one good thought is enough</title>
-  <meta name="description" content="One curated affirmation, once. No list, no accounts, no streaks. Just one good thought for today.">
+  <meta name="description" content="Say how you feel, and get one affirmation that fits. No accounts, no streaks, no notifications.">
   <meta name="theme-color" content="#191410">
   <meta name="color-scheme" content="dark">
 
@@ -26,50 +26,77 @@
   <div class="ambient" aria-hidden="true"></div>
 
   <main class="stage">
-    <p class="affirmation" id="affirmation" aria-live="polite">
-      You&rsquo;re doing okay. That&rsquo;s enough for today.
-    </p>
 
-    <div class="controls" id="today-controls" hidden>
-      <div class="row row-primary">
-        <button class="link-btn" id="another-btn" type="button" aria-label="Show another thought">
-          <span>Another</span>
-        </button>
-        <button class="link-btn keep" id="keep-btn" type="button" aria-pressed="false" aria-label="Keep this thought">
-          <span>Keep</span>
-        </button>
-      </div>
-
-      <div class="row row-review" id="review-nav" hidden>
-        <button class="step-btn" id="prev-btn" type="button" aria-label="Previous kept thought">
-          <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-        <span class="counter" id="counter" aria-live="polite">1 / 1</span>
-        <button class="step-btn" id="next-btn" type="button" aria-label="Next kept thought">
-          <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-        <button class="link-btn quiet" id="copy-btn" type="button">
-          <span>Copy link</span>
-        </button>
-        <button class="link-btn quiet" id="done-btn" type="button">
-          <span>Done</span>
-        </button>
-      </div>
-
-      <button class="link-btn quiet review-entry" id="review-btn" type="button" hidden>
-        <span>Kept thoughts</span>
+    <!-- R10 — check-in. Hidden until JS decides it's needed, so a no-JS
+         visitor still gets the fallback affirmation below (R6). -->
+    <section class="checkin" id="checkin" hidden aria-labelledby="question">
+      <p class="step-label" id="step-label">Step 1 of 2</p>
+      <h1 class="question" id="question">How are you feeling?</h1>
+      <div class="options" id="options" role="group" aria-labelledby="question"></div>
+      <button class="link-btn quiet" id="checkin-back" type="button" hidden>
+        <span>Back</span>
       </button>
+    </section>
 
-      <p class="note" id="link-note" hidden>
-        Your kept thoughts live in this link. Save it to keep them.
+    <!-- The thought. Rendered by default so the fallback survives a JS failure. -->
+    <section class="thought" id="thought-view">
+      <p class="meta" id="meta" hidden></p>
+
+      <p class="affirmation" id="affirmation" aria-live="polite">
+        You&rsquo;re doing okay. That&rsquo;s enough for today.
       </p>
-    </div>
+
+      <div class="controls" id="today-controls" hidden>
+        <div class="row row-primary">
+          <button class="link-btn" id="another-btn" type="button" aria-label="Show another thought">
+            <span>Another</span>
+          </button>
+          <button class="link-btn keep" id="keep-btn" type="button" aria-pressed="false" aria-label="Keep this thought">
+            <span>Keep</span>
+          </button>
+        </div>
+
+        <div class="row row-review" id="review-nav" hidden>
+          <button class="step-btn" id="prev-btn" type="button" aria-label="Previous kept thought">
+            <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <span class="counter" id="counter" aria-live="polite">1 / 1</span>
+          <button class="step-btn" id="next-btn" type="button" aria-label="Next kept thought">
+            <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="link-btn quiet" id="copy-btn" type="button"><span>Copy link</span></button>
+          <button class="link-btn quiet" id="done-btn" type="button"><span>Done</span></button>
+        </div>
+
+        <div class="row row-entries">
+          <button class="link-btn quiet" id="review-btn" type="button" hidden><span>Kept thoughts</span></button>
+          <button class="link-btn quiet" id="history-btn" type="button" hidden><span>How I&rsquo;ve been</span></button>
+        </div>
+
+        <p class="note" id="link-note" hidden>
+          Your kept thoughts live in this link. Save it to keep them.
+        </p>
+      </div>
+    </section>
+
+    <!-- R12 — check-in history -->
+    <section class="history" id="history-view" hidden aria-labelledby="history-title">
+      <h1 class="question small" id="history-title">How you&rsquo;ve been</h1>
+      <ol class="history-list" id="history-list"></ol>
+      <p class="note" id="history-note" hidden></p>
+      <div class="row">
+        <button class="link-btn quiet" id="clear-btn" type="button"><span>Clear history</span></button>
+        <button class="link-btn quiet" id="history-done" type="button"><span>Done</span></button>
+      </div>
+    </section>
+
   </main>
 
   <footer class="mark" aria-hidden="true">
     <span>OneGoodThought</span>
   </footer>
 
+  <script src="content.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
