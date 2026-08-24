@@ -157,6 +157,8 @@
       historyNote: document.getElementById('history-note'),
       clear: document.getElementById('clear-btn'),
       historyDone: document.getElementById('history-done'),
+      navRow: document.getElementById('nav-row'),
+      thoughtActions: document.getElementById('thought-actions'),
       gratitude: document.getElementById('gratitude-btn'),
       gratitudeView: document.getElementById('gratitude-view'),
       gratitudeList: document.getElementById('gratitude-list'),
@@ -343,12 +345,29 @@
 
       renderMeta();
 
+      // review gets one coherent action row instead of a stray button above it
+      if (mode === 'review') {
+        if (d.keep.parentNode !== d.reviewNav) d.reviewNav.insertBefore(d.keep, d.copy);
+      } else if (d.keep.parentNode !== d.thoughtActions) {
+        d.thoughtActions.appendChild(d.keep);
+      }
+
       var isKept = kept.indexOf(idx) !== -1;
-      d.keep.setAttribute('aria-pressed', isKept ? 'true' : 'false');
-      d.keep.querySelector('span').textContent = mode === 'review' ? 'Remove' : (isKept ? 'Kept' : 'Keep');
-      d.keep.setAttribute('aria-label', mode === 'review'
-        ? 'Remove this thought from your kept thoughts'
-        : (isKept ? 'Kept. Select to remove from your kept thoughts' : 'Keep this thought'));
+      if (mode === 'review') {
+        // everything here is already kept, so the toggle state carries no
+        // information — it is a destructive action, and must not look primary
+        d.keep.className = 'btn btn--nav btn--danger keep';
+        d.keep.removeAttribute('aria-pressed');
+        d.keep.querySelector('span').textContent = 'Remove';
+        d.keep.setAttribute('aria-label', 'Remove this thought from your kept thoughts');
+      } else {
+        d.keep.className = 'btn btn--secondary keep';
+        d.keep.setAttribute('aria-pressed', isKept ? 'true' : 'false');
+        d.keep.querySelector('span').textContent = isKept ? 'Kept' : 'Keep';
+        d.keep.setAttribute('aria-label', isKept
+          ? 'Kept. Select to remove from your kept thoughts'
+          : 'Keep this thought');
+      }
 
       d.review.hidden = mode === 'review' || kept.length === 0;
       if (!d.review.hidden) d.review.querySelector('span').textContent = 'Kept thoughts (' + kept.length + ')';
@@ -356,7 +375,11 @@
       d.history.hidden = mode === 'review' || store.checkins.length === 0;
       d.gratitude.hidden = mode === 'review'; // R13 — otherwise always available
 
+      // no orphan rule when every destination in the row is hidden
+      d.navRow.hidden = d.gratitude.hidden && d.review.hidden && d.history.hidden;
+
       d.another.hidden = mode === 'review';
+      d.thoughtActions.hidden = mode === 'review';
       d.reviewNav.hidden = mode !== 'review';
       d.linkNote.hidden = mode !== 'review';
 

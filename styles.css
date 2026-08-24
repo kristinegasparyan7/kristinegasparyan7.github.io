@@ -134,13 +134,26 @@ body.is-reviewing .ambient {
   transition: opacity 150ms var(--ease-in), transform 150ms var(--ease-in), filter 150ms var(--ease-in);
 }
 
-/* ---------- controls ---------- */
+/* ---------- controls ----------
+   Three tiers, deliberately far apart so the eye sorts them instantly:
+   1. primary  — filled ember, the one lit element on the screen
+   2. secondary— outlined, same size, clearly not the main move
+   3. nav      — small quiet text, separated by a rule, for leaving this screen
+   ------------------------------------------------------------------ */
 
 .controls {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-6);
   align-items: flex-start;
+  width: 100%;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
 }
 
 .row {
@@ -150,68 +163,67 @@ body.is-reviewing .ambient {
   flex-wrap: wrap;
 }
 
-.link-btn {
+.btn {
   appearance: none;
-  border: none;
-  background: none;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: 44px;
-  padding: var(--space-2) var(--space-1);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: none;
   font-family: var(--font-sans);
   font-weight: 600;
   font-size: 0.9375rem;
   letter-spacing: 0.01em;
-  color: var(--ink-dim);
-  transition: color 200ms var(--ease-out);
+  transition: background-color 200ms var(--ease-out), border-color 200ms var(--ease-out), color 200ms var(--ease-out);
 }
 
-.row-primary .link-btn:first-child {
-  margin-left: -0.25rem;
-}
-
-.link-btn span {
-  position: relative;
-}
-
-.link-btn span::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -4px;
-  height: 1px;
-  background: currentColor;
-  opacity: 0.35;
-  transition: opacity 200ms var(--ease-out), background-color 200ms var(--ease-out);
-}
-
-.link-btn:hover {
-  color: var(--ember);
-}
-
-.link-btn:hover span::after {
-  background: var(--ember);
-  opacity: 0.6;
-}
-
-.link-btn:active {
+.btn:active {
   transform: scale(0.97);
 }
 
-.link-btn:focus {
+.btn:focus {
   outline: none;
 }
 
-.link-btn:focus-visible {
+.btn:focus-visible {
   outline: 2px solid var(--ember);
-  outline-offset: 6px;
-  border-radius: 3px;
+  outline-offset: 3px;
 }
 
-/* kept state — carries an ember dot, so state isn't color alone */
+/* --- tier 1 --- */
+
+.btn--primary {
+  padding: var(--space-2) var(--space-6);
+  background: var(--ember);
+  border-color: var(--ember);
+  color: oklch(18% 0.03 45);
+}
+
+.btn--primary:hover {
+  background: oklch(from var(--ember) calc(l + 0.06) c h);
+  border-color: oklch(from var(--ember) calc(l + 0.06) c h);
+}
+
+/* --- tier 2 --- */
+
+.btn--secondary {
+  padding: var(--space-2) var(--space-5);
+  border-color: oklch(from var(--ink) l c h / 0.42);
+  color: var(--ink);
+}
+
+.btn--secondary:hover {
+  border-color: oklch(from var(--ember) l c h / 0.75);
+  color: var(--ember);
+}
+
+/* kept: filled-in state, marked by a dot as well as colour */
 .keep[aria-pressed='true'] {
+  border-color: oklch(from var(--ember) l c h / 0.6);
+  background: oklch(from var(--ember) l c h / 0.12);
   color: var(--ember);
 }
 
@@ -227,23 +239,62 @@ body.is-reviewing .ambient {
   background: var(--ember);
 }
 
-.keep[aria-pressed='true'] span::after {
-  background: var(--ember);
-  opacity: 0.5;
+.keep[aria-pressed='true'] span {
+  position: relative;
+  padding-left: 0.35rem;
 }
 
-.link-btn.quiet {
+/* --- tier 3 --- */
+
+.btn--nav {
+  min-height: 36px;
+  padding: var(--space-1) var(--space-2);
   font-weight: 500;
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
   color: var(--ink-faint);
 }
 
-.link-btn.quiet span::after {
-  opacity: 0.22;
+.btn--nav span {
+  position: relative;
 }
 
-/* shift the row, not its first child — the first child may be hidden */
-.row-entries {
-  margin-left: -0.25rem;
+.btn--nav span::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -3px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 180ms var(--ease-out);
+}
+
+.btn--nav:hover {
+  color: var(--ink);
+}
+
+.btn--nav:hover span::after {
+  opacity: 0.5;
+}
+
+.btn--danger:hover {
+  color: oklch(70% 0.14 25);
+}
+
+/* the rule is what separates "act on this" from "go elsewhere" */
+.nav {
+  display: flex;
+  align-items: center;
+  /* no row-gap: the 44px targets already separate wrapped rows */
+  gap: 0 var(--space-4);
+  flex-wrap: wrap;
+  margin-left: -0.5rem;
+  padding-top: var(--space-4);
+  border-top: 1px solid oklch(from var(--ink) l c h / 0.1);
+  width: 100%;
+  max-width: 30rem;
 }
 
 /* ---------- review navigation ---------- */
@@ -507,10 +558,6 @@ body.is-reviewing .ambient {
   text-wrap: pretty;
 }
 
-.row-entries {
-  gap: var(--space-5);
-}
-
 /* ---------- five good things (R13) ---------- */
 
 .gratitude-list {
@@ -687,7 +734,8 @@ body.is-reviewing .ambient {
 }
 
 @media (pointer: coarse) {
-  .link-btn {
-    padding: var(--space-3) var(--space-1);
+  .btn--nav {
+    min-height: 44px;
+    padding: var(--space-2) var(--space-2);
   }
 }
