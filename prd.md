@@ -31,11 +31,14 @@ Comparable products fail their users in two connected ways:
 - **R10 — Two-question check-in.** Before the thought, the user says how they feel and what is affecting them, one tap each ([US-checkin-feeling](user-stories/US-checkin-feeling.md)). Required once per day, not per reload.
 - **R11 — Match the thought to the check-in.** Affirmations carry feeling/situation tags and are scored against the answers, so the thought fits the user's actual state ([US-matched-affirmation](user-stories/US-matched-affirmation.md)). Content set expanded from 24 to 62 to cover the space without filler.
 - **R12 — Check-in history.** Past check-ins are recorded on-device and reviewable, so patterns become visible ([US-checkin-history](user-stories/US-checkin-history.md)). Stored in localStorage, not the URL: a log grows without bound and cannot live in a link.
+- **R13 — Five good things.** Five rotating, concrete prompts the user answers in their own words, autosaved on-device ([US-five-good-things](user-stories/US-five-good-things.md)). Unlike R8 and R12, the entry point is always visible rather than hidden until it has content, and the section animates its five lines in sequence — the one place in the product that draws attention to itself deliberately.
 
 ## 6. Out of Scope (v1)
 Accounts/login, streak tracking, push notifications, habit lists, affirmation categories/browsing, social sharing, analytics/tracking infrastructure.
 
 *Amended (R7–R9):* keeping thoughts is now in scope, but browsing them as a list is not — kept thoughts are reviewed one at a time (R8). Cross-device sync is handled by sharing the URL, not by accounts.
+
+*Amended (R13):* the product now accepts user-authored content, not only curated content. Five answered prompts is also the first screen that deliberately shows five things at once, which R1 forbade.
 
 *Amended (R10–R12):* affirmation *categories* are now effectively in scope — feeling/situation tags are categories by another name — and per-visit onboarding is too. Analytics remain out of scope. Accounts remain out of scope: history is device-local.
 

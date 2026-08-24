@@ -336,7 +336,8 @@ body.is-reviewing .ambient {
 
 .checkin,
 .thought,
-.history {
+.history,
+.gratitude {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -510,6 +511,106 @@ body.is-reviewing .ambient {
   gap: var(--space-5);
 }
 
+/* ---------- five good things (R13) ---------- */
+
+.gratitude-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--space-2) 0 0;
+  width: 100%;
+  max-width: 30rem;
+  max-height: min(52vh, 26rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  display: flex;
+  flex-direction: column;
+  /* must exceed the label-to-underline distance, or each line reads as
+     belonging to the prompt below it rather than its own */
+  gap: 2.5rem;
+}
+
+.g-row {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-left: var(--space-4);
+  /* staggered reveal — the one place this product animates on purpose */
+  animation: gRise 520ms var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+
+@keyframes gRise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* the ember marks a filled line — quiet progress, no counter */
+.g-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55rem;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: oklch(from var(--ink) l c h / 0.28);
+  transition: background-color 260ms var(--ease-out), box-shadow 260ms var(--ease-out);
+}
+
+.g-row.is-filled::before {
+  background: var(--ember);
+  box-shadow: 0 0 0 3px oklch(from var(--ember) l c h / 0.14);
+}
+
+.g-prompt {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--ink-faint);
+}
+
+.g-input {
+  appearance: none;
+  width: 100%;
+  padding: 0 0 var(--space-1);
+  border: none;
+  border-bottom: 1px solid oklch(from var(--ink) l c h / 0.4); /* 3.3:1 — an empty field is only its underline */
+  background: none;
+  font-family: var(--font-serif);
+  font-size: 1.0625rem;
+  line-height: 1.35;
+  color: var(--ink);
+  transition: border-color 200ms var(--ease-out);
+}
+
+.g-input::placeholder {
+  color: transparent;
+}
+
+.g-input:hover {
+  border-bottom-color: oklch(from var(--ink) l c h / 0.62);
+}
+
+.g-input:focus {
+  outline: none;
+  border-bottom-color: var(--ember);
+}
+
+.g-input:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+.saved-note {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: var(--ink-faint);
+}
+
 /* ---------- responsive ---------- */
 
 @media (max-width: 30rem) {
@@ -544,6 +645,16 @@ body.is-reviewing .ambient {
     font-size: 0.9375rem;
   }
 
+  .gratitude-list {
+    gap: 2.4rem;
+    max-height: 52vh;
+  }
+
+  .g-input {
+    font-size: 1rem;
+    line-height: 1.3;
+  }
+
   .mark {
     left: var(--space-6);
   }
@@ -568,6 +679,10 @@ body.is-reviewing .ambient {
     transition: opacity 120ms linear;
     transform: none;
     filter: none;
+  }
+
+  .g-row {
+    animation: none;
   }
 }
 

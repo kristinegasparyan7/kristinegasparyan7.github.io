@@ -30,6 +30,27 @@ window.OGT_CONTENT = {
     { id: 'none',   label: 'Nothing specific' }
   ],
 
+  // R13 — gratitude prompts. Five are drawn per day, deterministically.
+  // Concrete and small on purpose: "a meal you enjoyed" is answerable on a
+  // bad day; "what are you grateful for?" is not.
+  prompts: [
+    "Someone who made this week easier",
+    "Something your body did for you today",
+    "A small thing that went right",
+    "Something you're glad you didn't put off",
+    "A place you felt comfortable in",
+    "Something someone said that stayed with you",
+    "Something you own that still works",
+    "Something you learned recently, however small",
+    "A meal you actually enjoyed",
+    "Something you handle better than you used to",
+    "A sound you were glad to hear",
+    "Someone who is easy to be around",
+    "Something you were trusted with",
+    "A moment today that wasn't difficult",
+    "Something you're looking forward to"
+  ],
+
   affirmations: [
     /* 0 */  { t: "You don’t have to have it figured out today.",              f: ['anxious','overwhelmed'],     c: ['change','work','self'] },
     /* 1 */  { t: "Rest is not something you have to earn.",                   f: ['tired','overwhelmed'],       c: ['work','self','health'] },

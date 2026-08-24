@@ -6,9 +6,12 @@
   var AFFIRMATIONS = TAGS.map(function (a) { return a.t; });
   var FEELINGS = C.feelings || [];
   var CONTEXTS = C.contexts || [];
+  var PROMPTS = C.prompts || [];
 
   var STORE_KEY = 'ogt.v1';
   var HISTORY_LIMIT = 60; // R12 — bounded so history stays readable
+  var GRATITUDE_DAYS = 30; // R13 — bounded the same way
+  var GRATITUDE_SLOTS = 5;
   var B36 = 36;
 
   /* ---------- utilities ---------- */
@@ -39,11 +42,12 @@
     try {
       var raw = window.localStorage.getItem(STORE_KEY);
       var parsed = raw ? JSON.parse(raw) : null;
-      if (!parsed || !Array.isArray(parsed.checkins)) return { checkins: [] };
+      if (!parsed || !Array.isArray(parsed.checkins)) return { checkins: [], gratitude: {} };
+      if (!parsed.gratitude || typeof parsed.gratitude !== 'object') parsed.gratitude = {};
       return parsed;
     } catch (e) {
       storageOk = false;
-      return { checkins: [] };
+      return { checkins: [], gratitude: {} };
     }
   }
 
@@ -110,6 +114,18 @@
     return scored.map(function (o) { return o.i; });
   }
 
+  /* ---------- gratitude (R13) ---------- */
+
+  // Five prompts per day, rotated deterministically so the same day always
+  // asks the same things but consecutive days differ.
+  function promptsForDay(key) {
+    if (PROMPTS.length <= GRATITUDE_SLOTS) return PROMPTS.slice();
+    var start = hash(key) % PROMPTS.length;
+    var out = [];
+    for (var i = 0; i < GRATITUDE_SLOTS; i++) out.push(PROMPTS[(start + i) % PROMPTS.length]);
+    return out;
+  }
+
   /* ---------- app ---------- */
 
   function init() {
@@ -140,7 +156,12 @@
       historyList: document.getElementById('history-list'),
       historyNote: document.getElementById('history-note'),
       clear: document.getElementById('clear-btn'),
-      historyDone: document.getElementById('history-done')
+      historyDone: document.getElementById('history-done'),
+      gratitude: document.getElementById('gratitude-btn'),
+      gratitudeView: document.getElementById('gratitude-view'),
+      gratitudeList: document.getElementById('gratitude-list'),
+      gratitudeDone: document.getElementById('gratitude-done'),
+      savedNote: document.getElementById('saved-note')
     };
 
     var store = loadStore();
@@ -222,6 +243,68 @@
       }
     }
 
+    function gratitudeAnswers() {
+      var a = store.gratitude[today];
+      if (!Array.isArray(a)) a = [];
+      while (a.length < GRATITUDE_SLOTS) a.push('');
+      return a.slice(0, GRATITUDE_SLOTS);
+    }
+
+    var saveTimer;
+    function saveGratitude(answers) {
+      store.gratitude[today] = answers;
+
+      // keep only the most recent days so the store stays bounded
+      var keys = Object.keys(store.gratitude).sort();
+      while (keys.length > GRATITUDE_DAYS) delete store.gratitude[keys.shift()];
+
+      window.clearTimeout(saveTimer);
+      saveTimer = window.setTimeout(function () {
+        var ok = saveStore(store);
+        d.savedNote.textContent = ok ? 'Saved' : 'Not saved — this browser blocks storage';
+        window.setTimeout(function () {
+          if (d.savedNote.textContent === 'Saved') d.savedNote.textContent = '';
+        }, 1800);
+      }, 400);
+    }
+
+    function renderGratitude() {
+      var prompts = promptsForDay(today);
+      var answers = gratitudeAnswers();
+      d.gratitudeList.textContent = '';
+      d.savedNote.textContent = '';
+
+      prompts.forEach(function (prompt, i) {
+        var li = document.createElement('li');
+        li.className = 'g-row';
+        li.style.setProperty('--i', i);
+        if (answers[i]) li.classList.add('is-filled');
+
+        var label = document.createElement('label');
+        label.className = 'g-prompt';
+        label.setAttribute('for', 'g' + i);
+        label.textContent = prompt;
+
+        var input = document.createElement('input');
+        input.className = 'g-input';
+        input.id = 'g' + i;
+        input.type = 'text';
+        input.maxLength = 90;
+        input.autocomplete = 'off';
+        input.value = answers[i] || '';
+
+        input.addEventListener('input', function () {
+          answers[i] = input.value;
+          li.classList.toggle('is-filled', !!input.value.trim());
+          saveGratitude(answers);
+        });
+
+        li.appendChild(label);
+        li.appendChild(input);
+        d.gratitudeList.appendChild(li);
+      });
+    }
+
     function renderMeta() {
       if (!todayCheckin || mode !== 'thought') { d.meta.hidden = true; return; }
       d.meta.hidden = false;
@@ -243,13 +326,16 @@
 
     function paint() {
       d.checkin.hidden = mode !== 'checkin';
-      d.thoughtView.hidden = mode === 'checkin' || mode === 'history';
+      d.thoughtView.hidden = mode === 'checkin' || mode === 'history' || mode === 'gratitude';
       d.historyView.hidden = mode !== 'history';
+      d.gratitudeView.hidden = mode !== 'gratitude';
       document.body.classList.toggle('is-reviewing', mode === 'review');
       document.body.classList.toggle('is-history', mode === 'history');
+      document.body.classList.toggle('is-gratitude', mode === 'gratitude');
 
       if (mode === 'checkin') { renderOptions(); return; }
       if (mode === 'history') { renderHistory(); return; }
+      if (mode === 'gratitude') { renderGratitude(); return; }
 
       var idx = currentIndex();
       if (typeof idx !== 'number') return;
@@ -268,6 +354,7 @@
       if (!d.review.hidden) d.review.querySelector('span').textContent = 'Kept thoughts (' + kept.length + ')';
 
       d.history.hidden = mode === 'review' || store.checkins.length === 0;
+      d.gratitude.hidden = mode === 'review'; // R13 — otherwise always available
 
       d.another.hidden = mode === 'review';
       d.reviewNav.hidden = mode !== 'review';
@@ -432,6 +519,21 @@
       saveStore(store);
       todayCheckin = null;
       restartCheckin();
+    });
+
+    /* ---- R13: five good things ---- */
+    d.gratitude.addEventListener('click', function () {
+      mode = 'gratitude';
+      paint();
+      var first = d.gratitudeList.querySelector('.g-input');
+      if (first) first.focus();
+    });
+
+    d.gratitudeDone.addEventListener('click', function () {
+      window.clearTimeout(saveTimer);
+      saveStore(store);
+      mode = 'thought';
+      paint();
     });
 
     /* ---- shared kept-links opened without a reload ---- */

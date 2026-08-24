@@ -69,6 +69,7 @@
         </div>
 
         <div class="row row-entries">
+          <button class="link-btn quiet" id="gratitude-btn" type="button"><span>Five good things</span></button>
           <button class="link-btn quiet" id="review-btn" type="button" hidden><span>Kept thoughts</span></button>
           <button class="link-btn quiet" id="history-btn" type="button" hidden><span>How I&rsquo;ve been</span></button>
         </div>
@@ -87,6 +88,17 @@
       <div class="row">
         <button class="link-btn quiet" id="clear-btn" type="button"><span>Clear history</span></button>
         <button class="link-btn quiet" id="history-done" type="button"><span>Done</span></button>
+      </div>
+    </section>
+
+    <!-- R13 — five good things -->
+    <section class="gratitude" id="gratitude-view" hidden aria-labelledby="gratitude-title">
+      <h1 class="question small" id="gratitude-title">Five good things</h1>
+      <p class="note" id="gratitude-intro">Today&rsquo;s prompts. Answer what you can &mdash; blanks are fine.</p>
+      <ol class="gratitude-list" id="gratitude-list"></ol>
+      <div class="row">
+        <button class="link-btn quiet" id="gratitude-done" type="button"><span>Done</span></button>
+        <span class="saved-note" id="saved-note" role="status" aria-live="polite"></span>
       </div>
     </section>
 
