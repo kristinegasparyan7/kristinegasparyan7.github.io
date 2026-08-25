@@ -32,6 +32,9 @@ Comparable products fail their users in two connected ways:
 - **R11 — Match the thought to the check-in.** Affirmations carry feeling/situation tags and are scored against the answers, so the thought fits the user's actual state ([US-matched-affirmation](user-stories/US-matched-affirmation.md)). Content set expanded from 24 to 62 to cover the space without filler.
 - **R12 — Check-in history.** Past check-ins are recorded on-device and reviewable, so patterns become visible ([US-checkin-history](user-stories/US-checkin-history.md)). Stored in localStorage, not the URL: a log grows without bound and cannot live in a link.
 - **R13 — Five good things.** Five rotating, concrete prompts the user answers in their own words, autosaved on-device ([US-five-good-things](user-stories/US-five-good-things.md)). Unlike R8 and R12, the entry point is always visible rather than hidden until it has content, and the section animates its five lines in sequence — the one place in the product that draws attention to itself deliberately.
+- **R14 — Never show the same affirmation twice.** Each device records which affirmations it has been shown, and an unshown one is always preferred ([US-never-repeat](user-stories/US-never-repeat.md)). When the matching ones run out, a worse-matching but unshown affirmation wins over a well-matched repeat — this deliberately subordinates R11. When all 70 have been shown the record clears and the cycle restarts.
+
+  *Consequence accepted:* at ~3–4 affirmations per visit the set lasts a daily visitor about three weeks. The chosen exhaustion behaviour is a silent restart, so the first repeats arrive together rather than being spaced out. Growing the content set is the only real fix; this makes content volume a live constraint rather than a nice-to-have.
 
 ## 6. Out of Scope (v1)
 Accounts/login, streak tracking, push notifications, habit lists, affirmation categories/browsing, social sharing, analytics/tracking infrastructure.

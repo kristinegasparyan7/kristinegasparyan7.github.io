@@ -47,12 +47,20 @@
     try {
       var raw = window.localStorage.getItem(STORE_KEY);
       var parsed = raw ? JSON.parse(raw) : null;
-      if (!parsed || !Array.isArray(parsed.checkins)) return { checkins: [], gratitude: {} };
+      if (!parsed || !Array.isArray(parsed.checkins)) return { checkins: [], gratitude: {}, seen: [] };
       if (!parsed.gratitude || typeof parsed.gratitude !== 'object') parsed.gratitude = {};
+      if (!Array.isArray(parsed.seen)) {
+        // First run under R14: past check-ins record what was already shown.
+        parsed.seen = [];
+        for (var m = 0; m < parsed.checkins.length; m++) {
+          var pi = parsed.checkins[m].i;
+          if (typeof pi === 'number' && parsed.seen.indexOf(pi) === -1) parsed.seen.push(pi);
+        }
+      }
       return parsed;
     } catch (e) {
       storageOk = false;
-      return { checkins: [], gratitude: {} };
+      return { checkins: [], gratitude: {}, seen: [] };
     }
   }
 
@@ -101,22 +109,19 @@
 
   /* ---------- matching (R11) ---------- */
 
-  // Ranked pool: everything the feeling fits, best matches first. Scoring
-  // feeling=2 / context=1 lets a situation break ties without ever outranking
-  // the feeling, and guarantees the pool is bigger than one item.
-  function buildPool(feeling, context, seed) {
+  // Every affirmation ranked against the check-in, best match first.
+  // Scoring feeling=2 / context=1 lets a situation break ties without ever
+  // outranking the feeling. Score 0 means no match at all, kept at the back
+  // so R14 can still reach it once the matching ones are used up.
+  function rankAll(feeling, context, seed) {
     var scored = [];
     for (var i = 0; i < TAGS.length; i++) {
       var t = TAGS[i];
-      var s = (t.f.indexOf(feeling) !== -1 ? 2 : 0) + (t.c.indexOf(context) !== -1 ? 1 : 0);
-      if (s > 0) scored.push({ i: i, s: s, j: hash(seed + ':' + i) });
-    }
-    // Unknown ids matched nothing: fall back to the whole set (R11 negative path).
-    if (!scored.length) {
-      for (var k = 0; k < TAGS.length; k++) scored.push({ i: k, s: 0, j: hash(seed + ':' + k) });
+      var sc = (t.f.indexOf(feeling) !== -1 ? 2 : 0) + (t.c.indexOf(context) !== -1 ? 1 : 0);
+      scored.push({ i: i, s: sc, j: hash(seed + ':' + i) });
     }
     scored.sort(function (a, b) { return b.s - a.s || a.j - b.j; });
-    return scored.map(function (o) { return o.i; });
+    return scored;
   }
 
   /* ---------- gratitude (R13) ---------- */
@@ -195,22 +200,39 @@
     var mode = todayCheckin ? 'thought' : 'checkin'; // checkin | thought | review | history
     var step = 1;
     var draftFeeling = null;
-    var pool = [];
-    var cursor = 0;
+
     var reviewPos = 0;
     var swapping = false;
     var clearArmed = false;
     var clearTimer;
 
-    if (todayCheckin) {
-      pool = buildPool(todayCheckin.f, todayCheckin.c, today + todayCheckin.f + todayCheckin.c);
-      var at = pool.indexOf(todayCheckin.i);
-      cursor = at === -1 ? 0 : at;
-    }
-
     function currentIndex() {
       if (mode === 'review') return kept[reviewPos];
-      return pool.length ? pool[cursor] : 0;
+      return todayCheckin && typeof todayCheckin.i === 'number' ? todayCheckin.i : 0;
+    }
+
+    /* ---- R14: never show the same affirmation twice ---- */
+
+    function markSeen(i) {
+      if (store.seen.indexOf(i) === -1) store.seen.push(i);
+    }
+
+    // Best unseen match. Falls back to an unseen non-match rather than
+    // repeating — never-repeat outranks match quality. When the whole set
+    // has been seen the list resets and the cycle starts over.
+    function pickUnseen(feeling, context) {
+      var ranked = rankAll(feeling, context, today + feeling + context);
+      var i;
+
+      for (i = 0; i < ranked.length; i++) {
+        if (ranked[i].s > 0 && store.seen.indexOf(ranked[i].i) === -1) return ranked[i].i;
+      }
+      for (i = 0; i < ranked.length; i++) {
+        if (store.seen.indexOf(ranked[i].i) === -1) return ranked[i].i;
+      }
+
+      store.seen = [];
+      return ranked.length ? ranked[0].i : 0;
     }
 
     /* ---- rendering ---- */
@@ -495,9 +517,9 @@
         return;
       }
 
-      pool = buildPool(draftFeeling, id, today + draftFeeling + id);
-      cursor = 0;
-      todayCheckin = { d: today, f: draftFeeling, c: id, i: pool[0] };
+      var picked = pickUnseen(draftFeeling, id);
+      markSeen(picked);
+      todayCheckin = { d: today, f: draftFeeling, c: id, i: picked };
 
       // one record per day — redoing today replaces it rather than stacking
       store.checkins = store.checkins.filter(function (c) { return c.d !== today; });
@@ -523,9 +545,12 @@
 
     /* ---- R2: another ---- */
     d.another.addEventListener('click', function () {
+      if (!todayCheckin) return;
       swapTo(function () {
-        cursor++;
-        if (cursor >= pool.length) cursor = 0;
+        var next = pickUnseen(todayCheckin.f, todayCheckin.c);
+        markSeen(next);
+        todayCheckin.i = next;
+        saveStore(store);
       });
     });
 
