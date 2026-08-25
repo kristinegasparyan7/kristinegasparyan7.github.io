@@ -1,0 +1,23 @@
+# OneGoodThought — static site, no build step.
+# Every file is hand-written; there is nothing to compile or bundle.
+
+[build]
+  publish = "."
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+
+# Content is edited by hand and shipped often. Long caching would mean a
+# wording fix takes a day to reach anyone, so revalidate every load.
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
